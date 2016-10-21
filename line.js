@@ -53,16 +53,9 @@ var proto = GLLine2D.prototype
 
 ;(function() {
   var MATRIX = [1, 0, 0,
-                0, 1, 0,
-                0, 0, 1]
+    0, 1, 0,
+    0, 0, 1]
   var SCREEN_SHAPE = [0, 0]
-
-  var PX_AXIS = [1, 0]
-  var NX_AXIS = [-1, 0]
-  var PY_AXIS = [0, 1]
-  var NY_AXIS = [0, -1]
-
-  var PICK_OFFSET = [0, 0, 0, 0]
 
   proto.projectIntoVectors = function() {
 
@@ -85,6 +78,21 @@ var proto = GLLine2D.prototype
     SCREEN_SHAPE[0] = screenX
     SCREEN_SHAPE[1] = screenY
   }
+
+  proto.setProjectionUniforms = function(uniforms) {
+    uniforms.matrix = MATRIX
+    uniforms.screenShape = SCREEN_SHAPE
+  }
+})()
+
+;(function() {
+
+  var PX_AXIS = [1, 0]
+  var NX_AXIS = [-1, 0]
+  var PY_AXIS = [0, 1]
+  var NY_AXIS = [0, -1]
+
+  var PICK_OFFSET = [0, 0, 0, 0]
 
   proto.draw = function() {
     var count = this.vertCount
@@ -113,7 +121,7 @@ var proto = GLLine2D.prototype
       fillShader.bind()
 
       var fillUniforms = fillShader.uniforms
-      fillUniforms.matrix = MATRIX
+      this.setProjectionUniforms(fillUniforms)
       fillUniforms.depth = plot.nextDepthValue()
 
       var fillAttributes = fillShader.attributes
@@ -160,10 +168,9 @@ var proto = GLLine2D.prototype
     shader.bind()
 
     var uniforms = shader.uniforms
-    uniforms.matrix = MATRIX
+    this.setProjectionUniforms(uniforms)
     uniforms.color  = color
     uniforms.width  = width * pixelRatio
-    uniforms.screenShape = SCREEN_SHAPE
     uniforms.dashPattern = this.dashPattern.bind()
     uniforms.dashLength = this.dashLength * pixelRatio
 
@@ -179,9 +186,8 @@ var proto = GLLine2D.prototype
       mshader.bind()
 
       var muniforms = mshader.uniforms
-      muniforms.matrix = MATRIX
+      this.setProjectionUniforms(muniforms)
       muniforms.color  = color
-      muniforms.screenShape = SCREEN_SHAPE
       muniforms.radius = width * pixelRatio
 
       mshader.attributes.p.pointer(gl.FLOAT, false, 48, 0)
@@ -218,10 +224,9 @@ var proto = GLLine2D.prototype
     shader.bind()
 
     var uniforms = shader.uniforms
-    uniforms.matrix      = MATRIX
+    this.setProjectionUniforms(uniforms)
     uniforms.width       = width * pixelRatio
     uniforms.pickOffset  = PICK_OFFSET
-    uniforms.screenShape = SCREEN_SHAPE
 
     var attributes = shader.attributes
 
@@ -268,8 +273,7 @@ proto.update = function(options) {
 
   this.color = (options.color || [0, 0, 1, 1]).slice()
   this.width = +(options.width || 1)
-
-  this.fill      = (options.fill || [false,false,false,false]).slice()
+  this.fill = (options.fill || [false, false, false, false]).slice()
   this.fillColor = deepCopy(options.fillColor || [[0, 0, 0, 1],
                      [0, 0, 0, 1],
                      [0, 0, 0, 1],
