@@ -51,13 +51,18 @@ function GLLine2D(
 
 var proto = GLLine2D.prototype
 
-;(function() {
-  var MATRIX = [1, 0, 0,
-                0, 1, 0,
-                0, 0, 1]
-  var SCREEN_SHAPE = [0, 0]
+proto.projectIntoVectors = (function() {
 
-  proto.projectIntoVectors = function() {
+  var pm = {
+    matrix: [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1
+    ],
+    screenShape: [0, 0]
+  }
+
+  return function() {
 
     var bounds  = this.bounds
     var viewBox = this.plot.viewBox
@@ -70,20 +75,22 @@ var proto = GLLine2D.prototype
     var screenX = viewBox[2] - viewBox[0]
     var screenY = viewBox[3] - viewBox[1]
 
-    MATRIX[0] = 2 * boundX / dataX
-    MATRIX[4] = 2 * boundY / dataY
-    MATRIX[6] = 2 * (bounds[0] - dataBox[0]) / dataX - 1
-    MATRIX[7] = 2 * (bounds[1] - dataBox[1]) / dataY - 1
+    pm.matrix[0] = 2 * boundX / dataX
+    pm.matrix[4] = 2 * boundY / dataY
+    pm.matrix[6] = 2 * (bounds[0] - dataBox[0]) / dataX - 1
+    pm.matrix[7] = 2 * (bounds[1] - dataBox[1]) / dataY - 1
 
-    SCREEN_SHAPE[0] = screenX
-    SCREEN_SHAPE[1] = screenY
-  }
+    pm.screenShape[0] = screenX
+    pm.screenShape[1] = screenY
 
-  proto.setProjectionUniforms = function(uniforms) {
-    uniforms.matrix = MATRIX
-    uniforms.screenShape = SCREEN_SHAPE
+    return pm
   }
 })()
+
+proto.setProjectionUniforms = function(uniforms, projectionModel) {
+  uniforms.matrix = projectionModel.matrix
+  uniforms.screenShape = projectionModel.screenShape
+}
 
 proto.draw = (function() {
 
@@ -99,7 +106,7 @@ proto.draw = (function() {
       return
     }
 
-    this.projectIntoVectors()
+    var projectionModel = this.projectIntoVectors()
 
     var plot       = this.plot
     var width      = this.width
@@ -119,7 +126,7 @@ proto.draw = (function() {
       fillShader.bind()
 
       var fillUniforms = fillShader.uniforms
-      this.setProjectionUniforms(fillUniforms)
+      this.setProjectionUniforms(fillUniforms, projectionModel)
       fillUniforms.depth = plot.nextDepthValue()
 
       var fillAttributes = fillShader.attributes
@@ -166,7 +173,7 @@ proto.draw = (function() {
     shader.bind()
 
     var uniforms = shader.uniforms
-    this.setProjectionUniforms(uniforms)
+    this.setProjectionUniforms(uniforms, projectionModel)
     uniforms.color  = color
     uniforms.width  = width * pixelRatio
     uniforms.dashPattern = this.dashPattern.bind()
@@ -184,7 +191,7 @@ proto.draw = (function() {
       mshader.bind()
 
       var muniforms = mshader.uniforms
-      this.setProjectionUniforms(muniforms)
+      this.setProjectionUniforms(muniforms, projectionModel)
       muniforms.color  = color
       muniforms.radius = width * pixelRatio
 
@@ -208,7 +215,7 @@ proto.drawPick = (function() {
       return pickOffset + numPoints
     }
 
-    this.projectIntoVectors()
+    var projectionModel = this.projectIntoVectors()
 
     var plot       = this.plot
     var width      = this.width
@@ -227,7 +234,7 @@ proto.drawPick = (function() {
     shader.bind()
 
     var uniforms = shader.uniforms
-    this.setProjectionUniforms(uniforms)
+    this.setProjectionUniforms(uniforms, projectionModel)
     uniforms.width       = width * pixelRatio
     uniforms.pickOffset  = PICK_OFFSET
 
