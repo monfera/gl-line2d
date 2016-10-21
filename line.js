@@ -51,142 +51,139 @@ function GLLine2D(
 
 var proto = GLLine2D.prototype
 
-proto.draw = (function() {
-var MATRIX = [1, 0, 0,
-              0, 1, 0,
-              0, 0, 1]
-var SCREEN_SHAPE = [0, 0]
-var PX_AXIS = [1, 0]
-var NX_AXIS = [-1, 0]
-var PY_AXIS = [0, 1]
-var NY_AXIS = [0, -1]
-return function() {
-  var count     = this.vertCount
-
-  if(!count) {
-    return
-  }
-
-  var plot       = this.plot
-  var width      = this.width
-  var bounds     = this.bounds
-  var gl         = plot.gl
-  var viewBox    = plot.viewBox
-  var dataBox    = plot.dataBox
-  var pixelRatio = plot.pixelRatio
-
-  var boundX  = bounds[2] - bounds[0]
-  var boundY  = bounds[3] - bounds[1]
-  var dataX   = dataBox[2] - dataBox[0]
-  var dataY   = dataBox[3] - dataBox[1]
-  var screenX = viewBox[2] - viewBox[0]
-  var screenY = viewBox[3] - viewBox[1]
-
-  MATRIX[0] = 2 * boundX / dataX
-  MATRIX[4] = 2 * boundY / dataY
-  MATRIX[6] = 2 * (bounds[0] - dataBox[0]) / dataX - 1
-  MATRIX[7] = 2 * (bounds[1] - dataBox[1]) / dataY - 1
-
-  SCREEN_SHAPE[0] = screenX
-  SCREEN_SHAPE[1] = screenY
-
-  var color     = this.color
-
-  var buffer = this.lineBuffer
-  buffer.bind()
-
-  var fill = this.fill
-
-  if(fill[0] || fill[1] || fill[2] || fill[3]) {
-
-    var fillShader = this.fillShader
-    fillShader.bind()
-
-    var fillUniforms = fillShader.uniforms
-    fillUniforms.matrix = MATRIX
-    fillUniforms.depth = plot.nextDepthValue()
-
-    var fillAttributes = fillShader.attributes
-    fillAttributes.a.pointer(gl.FLOAT, false, 16, 0)
-    fillAttributes.d.pointer(gl.FLOAT, false, 16, 8)
-
-    gl.depthMask(true)
-    gl.enable(gl.DEPTH_TEST)
-
-    var fillColor = this.fillColor
-    if(fill[0]) {
-      fillUniforms.color        = fillColor[0]
-      fillUniforms.projectAxis  = NX_AXIS
-      fillUniforms.projectValue = 1
-      gl.drawArrays(gl.TRIANGLES, 0, count)
-    }
-
-    if(fill[1]) {
-      fillUniforms.color        = fillColor[1]
-      fillUniforms.projectAxis  = NY_AXIS
-      fillUniforms.projectValue = 1
-      gl.drawArrays(gl.TRIANGLES, 0, count)
-    }
-
-    if(fill[2]) {
-      fillUniforms.color        = fillColor[2]
-      fillUniforms.projectAxis  = PX_AXIS
-      fillUniforms.projectValue = 1
-      gl.drawArrays(gl.TRIANGLES, 0, count)
-    }
-
-    if(fill[3]) {
-      fillUniforms.color        = fillColor[3]
-      fillUniforms.projectAxis  = PY_AXIS
-      fillUniforms.projectValue = 1
-      gl.drawArrays(gl.TRIANGLES, 0, count)
-    }
-
-    gl.depthMask(false)
-    gl.disable(gl.DEPTH_TEST)
-  }
-
-  var shader = this.lineShader
-  shader.bind()
-
-  var uniforms = shader.uniforms
-  uniforms.matrix = MATRIX
-  uniforms.color  = color
-  uniforms.width  = width * pixelRatio
-  uniforms.screenShape = SCREEN_SHAPE
-  uniforms.dashPattern = this.dashPattern.bind()
-  uniforms.dashLength = this.dashLength * pixelRatio
-
-  var attributes = shader.attributes
-  attributes.a.pointer(gl.FLOAT, false, 16, 0)
-  attributes.d.pointer(gl.FLOAT, false, 16, 8)
-
-  gl.drawArrays(gl.TRIANGLES, 0, count)
-
-  //Draw mitres
-  if(width > 2 && !this.usingDashes) {
-    var mshader = this.mitreShader
-    mshader.bind()
-
-    var muniforms = mshader.uniforms
-    muniforms.matrix = MATRIX
-    muniforms.color  = color
-    muniforms.screenShape = SCREEN_SHAPE
-    muniforms.radius = width * pixelRatio
-
-    mshader.attributes.p.pointer(gl.FLOAT, false, 48, 0)
-    gl.drawArrays(gl.POINTS, 0, (count / 3) | 0)
-  }
-}
-})()
-
-proto.drawPick = (function() {
+;(function() {
   var MATRIX = [1, 0, 0,
                 0, 1, 0,
                 0, 0, 1]
   var SCREEN_SHAPE = [0, 0]
+
+  var PX_AXIS = [1, 0]
+  var NX_AXIS = [-1, 0]
+  var PY_AXIS = [0, 1]
+  var NY_AXIS = [0, -1]
+
   var PICK_OFFSET = [0, 0, 0, 0]
-  return function(pickOffset) {
+
+  proto.draw = function() {
+    var count = this.vertCount
+
+    if(!count) {
+      return
+    }
+
+    var plot       = this.plot
+    var width      = this.width
+    var bounds     = this.bounds
+    var gl         = plot.gl
+    var viewBox    = plot.viewBox
+    var dataBox    = plot.dataBox
+    var pixelRatio = plot.pixelRatio
+
+    var boundX  = bounds[2] - bounds[0]
+    var boundY  = bounds[3] - bounds[1]
+    var dataX   = dataBox[2] - dataBox[0]
+    var dataY   = dataBox[3] - dataBox[1]
+    var screenX = viewBox[2] - viewBox[0]
+    var screenY = viewBox[3] - viewBox[1]
+
+    MATRIX[0] = 2 * boundX / dataX
+    MATRIX[4] = 2 * boundY / dataY
+    MATRIX[6] = 2 * (bounds[0] - dataBox[0]) / dataX - 1
+    MATRIX[7] = 2 * (bounds[1] - dataBox[1]) / dataY - 1
+
+    SCREEN_SHAPE[0] = screenX
+    SCREEN_SHAPE[1] = screenY
+
+    var color     = this.color
+
+    var buffer = this.lineBuffer
+    buffer.bind()
+
+    var fill = this.fill
+
+    if(fill[0] || fill[1] || fill[2] || fill[3]) {
+
+      var fillShader = this.fillShader
+      fillShader.bind()
+
+      var fillUniforms = fillShader.uniforms
+      fillUniforms.matrix = MATRIX
+      fillUniforms.depth = plot.nextDepthValue()
+
+      var fillAttributes = fillShader.attributes
+      fillAttributes.a.pointer(gl.FLOAT, false, 16, 0)
+      fillAttributes.d.pointer(gl.FLOAT, false, 16, 8)
+
+      gl.depthMask(true)
+      gl.enable(gl.DEPTH_TEST)
+
+      var fillColor = this.fillColor
+      if(fill[0]) {
+        fillUniforms.color        = fillColor[0]
+        fillUniforms.projectAxis  = NX_AXIS
+        fillUniforms.projectValue = 1
+        gl.drawArrays(gl.TRIANGLES, 0, count)
+      }
+
+      if(fill[1]) {
+        fillUniforms.color        = fillColor[1]
+        fillUniforms.projectAxis  = NY_AXIS
+        fillUniforms.projectValue = 1
+        gl.drawArrays(gl.TRIANGLES, 0, count)
+      }
+
+      if(fill[2]) {
+        fillUniforms.color        = fillColor[2]
+        fillUniforms.projectAxis  = PX_AXIS
+        fillUniforms.projectValue = 1
+        gl.drawArrays(gl.TRIANGLES, 0, count)
+      }
+
+      if(fill[3]) {
+        fillUniforms.color        = fillColor[3]
+        fillUniforms.projectAxis  = PY_AXIS
+        fillUniforms.projectValue = 1
+        gl.drawArrays(gl.TRIANGLES, 0, count)
+      }
+
+      gl.depthMask(false)
+      gl.disable(gl.DEPTH_TEST)
+    }
+
+    var shader = this.lineShader
+    shader.bind()
+
+    var uniforms = shader.uniforms
+    uniforms.matrix = MATRIX
+    uniforms.color  = color
+    uniforms.width  = width * pixelRatio
+    uniforms.screenShape = SCREEN_SHAPE
+    uniforms.dashPattern = this.dashPattern.bind()
+    uniforms.dashLength = this.dashLength * pixelRatio
+
+    var attributes = shader.attributes
+    attributes.a.pointer(gl.FLOAT, false, 16, 0)
+    attributes.d.pointer(gl.FLOAT, false, 16, 8)
+
+    gl.drawArrays(gl.TRIANGLES, 0, count)
+
+    //Draw mitres
+    if(width > 2 && !this.usingDashes) {
+      var mshader = this.mitreShader
+      mshader.bind()
+
+      var muniforms = mshader.uniforms
+      muniforms.matrix = MATRIX
+      muniforms.color  = color
+      muniforms.screenShape = SCREEN_SHAPE
+      muniforms.radius = width * pixelRatio
+
+      mshader.attributes.p.pointer(gl.FLOAT, false, 48, 0)
+      gl.drawArrays(gl.POINTS, 0, (count / 3) | 0)
+    }
+  }
+
+  proto.drawPick = function(pickOffset) {
 
     var count      = this.vertCount
     var numPoints  = this.numPoints
