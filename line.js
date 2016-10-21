@@ -31,7 +31,6 @@ function GLLine2D(
   this.usingDashes = false
 
   this.bounds     = [Infinity, Infinity, -Infinity, -Infinity]
-
   this.width      = 1
   this.color      = [0, 0, 1, 1]
 
@@ -53,7 +52,7 @@ function GLLine2D(
 
 var proto = GLLine2D.prototype
 
-proto.projectIntoVectors = (function() {
+proto.setProjectionModel = (function() {
 
   var pm = {
     matrix: [
@@ -108,7 +107,7 @@ proto.draw = (function() {
       return
     }
 
-    var projectionModel = this.projectIntoVectors()
+    var projectionModel = this.setProjectionModel()
 
     var plot       = this.plot
     var width      = this.width
@@ -217,7 +216,7 @@ proto.drawPick = (function() {
       return pickOffset + numPoints
     }
 
-    var projectionModel = this.projectIntoVectors()
+    var projectionModel = this.setProjectionModel()
 
     var plot       = this.plot
     var width      = this.width
