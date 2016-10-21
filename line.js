@@ -53,8 +53,8 @@ var proto = GLLine2D.prototype
 
 ;(function() {
   var MATRIX = [1, 0, 0,
-    0, 1, 0,
-    0, 0, 1]
+                0, 1, 0,
+                0, 0, 1]
   var SCREEN_SHAPE = [0, 0]
 
   proto.projectIntoVectors = function() {
@@ -85,16 +85,14 @@ var proto = GLLine2D.prototype
   }
 })()
 
-;(function() {
+proto.draw = (function() {
 
   var PX_AXIS = [1, 0]
   var NX_AXIS = [-1, 0]
   var PY_AXIS = [0, 1]
   var NY_AXIS = [0, -1]
 
-  var PICK_OFFSET = [0, 0, 0, 0]
-
-  proto.draw = function() {
+  return function() {
     var count = this.vertCount
 
     if(!count) {
@@ -194,8 +192,13 @@ var proto = GLLine2D.prototype
       gl.drawArrays(gl.POINTS, 0, (count / 3) | 0)
     }
   }
+})()
 
-  proto.drawPick = function(pickOffset) {
+proto.drawPick = (function() {
+
+  var PICK_OFFSET = [0, 0, 0, 0]
+
+  return function(pickOffset) {
 
     var count      = this.vertCount
     var numPoints  = this.numPoints
