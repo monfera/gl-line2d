@@ -61,16 +61,15 @@ var NX_AXIS = [-1, 0]
 var PY_AXIS = [0, 1]
 var NY_AXIS = [0, -1]
 return function() {
-  var plot      = this.plot
-  var color     = this.color
-  var width     = this.width
-  var bounds    = this.bounds
   var count     = this.vertCount
 
   if(!count) {
     return
   }
 
+  var plot       = this.plot
+  var width      = this.width
+  var bounds     = this.bounds
   var gl         = plot.gl
   var viewBox    = plot.viewBox
   var dataBox    = plot.dataBox
@@ -90,6 +89,8 @@ return function() {
 
   SCREEN_SHAPE[0] = screenX
   SCREEN_SHAPE[1] = screenY
+
+  var color     = this.color
 
   var buffer = this.lineBuffer
   buffer.bind()
@@ -186,14 +187,18 @@ proto.drawPick = (function() {
   var SCREEN_SHAPE = [0, 0]
   var PICK_OFFSET = [0, 0, 0, 0]
   return function(pickOffset) {
-    var plot       = this.plot
-    var shader     = this.pickShader
-    var buffer     = this.lineBuffer
-    var pickBuffer = this.pickBuffer
-    var width      = this.width
-    var numPoints  = this.numPoints
-    var bounds     = this.bounds
+
     var count      = this.vertCount
+    var numPoints  = this.numPoints
+
+    this.pickOffset = pickOffset
+    if(!count) {
+      return pickOffset + numPoints
+    }
+
+    var plot       = this.plot
+    var width      = this.width
+    var bounds     = this.bounds
     var gl         = plot.gl
     var viewBox    = plot.viewBox
     var dataBox    = plot.dataBox
@@ -206,12 +211,6 @@ proto.drawPick = (function() {
     var screenX = viewBox[2] - viewBox[0]
     var screenY = viewBox[3] - viewBox[1]
 
-    this.pickOffset = pickOffset
-
-    if(!count) {
-      return pickOffset + numPoints
-    }
-
     MATRIX[0] = 2 * boundX / dataX
     MATRIX[4] = 2 * boundY / dataY
     MATRIX[6] = 2 * (bounds[0] - dataBox[0]) / dataX - 1
@@ -219,6 +218,10 @@ proto.drawPick = (function() {
 
     SCREEN_SHAPE[0] = screenX
     SCREEN_SHAPE[1] = screenY
+
+    var shader     = this.pickShader
+    var buffer     = this.lineBuffer
+    var pickBuffer = this.pickBuffer
 
     PICK_OFFSET[0] =  pickOffset         & 0xff
     PICK_OFFSET[1] = (pickOffset >>> 8)  & 0xff
