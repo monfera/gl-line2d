@@ -100,7 +100,9 @@ proto.setProjectionModel = (function() {
 
 proto.setProjectionUniforms = function(uniforms, projectionModel) {
   uniforms.scaleHi = projectionModel.scaleHi
+  uniforms.scaleLo = projectionModel.scaleLo
   uniforms.translateHi = projectionModel.translateHi
+  uniforms.translateLo = projectionModel.translateLo
   uniforms.screenShape = projectionModel.screenShape
 }
 
@@ -211,7 +213,7 @@ proto.draw = (function() {
       var mshader = this.mitreShader
 
       this.lineBufferLo.bind()
-      mshader.attributes.aLo.pointer(gl.FLOAT, false, 16, 0)
+      mshader.attributes.aLo.pointer(gl.FLOAT, false, 48, 0)
 
       this.lineBufferHi.bind()
       mshader.bind()
