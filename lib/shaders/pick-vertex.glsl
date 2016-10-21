@@ -9,10 +9,10 @@ uniform float width;
 
 varying vec4 pickA, pickB;
 
-#pragma glslify: project = require("./project.glsl")
+#pragma glslify: baseProject = require("./baseProject.glsl")
 
 void main() {
-  vec3 base = project(matrix, a);
+  vec3 base = baseProject(matrix, a);
   vec2 n = width * normalize(screenShape.yx * vec2(d.y, -d.x)) / screenShape.xy;
   gl_Position = vec4(base.xy / base.z + n, 0, 1);
   pickA = pick0;

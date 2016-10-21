@@ -8,11 +8,12 @@ uniform float width;
 
 varying vec2 direction;
 
-#pragma glslify: project = require("./project.glsl")
+#pragma glslify: baseProject = require("./baseProject.glsl")
+#pragma glslify: dirProject = require("./dirProject.glsl")
 
 void main() {
-  vec2 dir = (matrix * vec3(d, 0)).xy;
-  vec3 base = project(matrix, a);
+  vec2 dir = dirProject(matrix, d);
+  vec3 base = baseProject(matrix, a);
   vec2 n = 0.5 * width * normalize(screenShape.yx * vec2(dir.y, -dir.x)) / screenShape.xy;
   vec2 tangent = normalize(screenShape.xy * dir);
   if(dir.x < 0.0 || (dir.x == 0.0 && dir.y < 0.0)) {
