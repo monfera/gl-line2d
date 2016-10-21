@@ -55,8 +55,8 @@ var proto = GLLine2D.prototype
 proto.setProjectionModel = (function() {
 
   var pm = {
-    scale: [0, 0],
-    translate: [0, 0],
+    scaleHi: [0, 0],
+    translateHi: [0, 0],
     screenShape: [0, 0]
   }
 
@@ -73,10 +73,10 @@ proto.setProjectionModel = (function() {
     var screenX = viewBox[2] - viewBox[0]
     var screenY = viewBox[3] - viewBox[1]
 
-    pm.scale[0]     = 2 * boundX / dataX
-    pm.scale[1]     = 2 * boundY / dataY
-    pm.translate[0] = 2 * (bounds[0] - dataBox[0]) / dataX - 1
-    pm.translate[1] = 2 * (bounds[1] - dataBox[1]) / dataY - 1
+    pm.scaleHi[0]     = 2 * boundX / dataX
+    pm.scaleHi[1]     = 2 * boundY / dataY
+    pm.translateHi[0] = 2 * (bounds[0] - dataBox[0]) / dataX - 1
+    pm.translateHi[1] = 2 * (bounds[1] - dataBox[1]) / dataY - 1
 
     pm.screenShape[0] = screenX
     pm.screenShape[1] = screenY
@@ -86,8 +86,8 @@ proto.setProjectionModel = (function() {
 })()
 
 proto.setProjectionUniforms = function(uniforms, projectionModel) {
-  uniforms.scale = projectionModel.scale
-  uniforms.translate = projectionModel.translate
+  uniforms.scaleHi = projectionModel.scaleHi
+  uniforms.translateHi = projectionModel.translateHi
   uniforms.screenShape = projectionModel.screenShape
 }
 
@@ -129,8 +129,8 @@ proto.draw = (function() {
       fillUniforms.depth = plot.nextDepthValue()
 
       var fillAttributes = fillShader.attributes
-      fillAttributes.a.pointer(gl.FLOAT, false, 16, 0)
-      fillAttributes.d.pointer(gl.FLOAT, false, 16, 8)
+      fillAttributes.aHi.pointer(gl.FLOAT, false, 16, 0)
+      fillAttributes.dHi.pointer(gl.FLOAT, false, 16, 8)
 
       gl.depthMask(true)
       gl.enable(gl.DEPTH_TEST)
@@ -179,8 +179,8 @@ proto.draw = (function() {
     uniforms.dashLength = this.dashLength * pixelRatio
 
     var attributes = shader.attributes
-    attributes.a.pointer(gl.FLOAT, false, 16, 0)
-    attributes.d.pointer(gl.FLOAT, false, 16, 8)
+    attributes.aHi.pointer(gl.FLOAT, false, 16, 0)
+    attributes.dHi.pointer(gl.FLOAT, false, 16, 8)
 
     gl.drawArrays(gl.TRIANGLES, 0, count)
 
@@ -194,7 +194,7 @@ proto.draw = (function() {
       muniforms.color  = color
       muniforms.radius = width * pixelRatio
 
-      mshader.attributes.a.pointer(gl.FLOAT, false, 48, 0)
+      mshader.attributes.aHi.pointer(gl.FLOAT, false, 48, 0)
       gl.drawArrays(gl.POINTS, 0, (count / 3) | 0)
     }
   }
@@ -240,8 +240,8 @@ proto.drawPick = (function() {
     var attributes = shader.attributes
 
     buffer.bind()
-    attributes.a.pointer(gl.FLOAT, false, 16, 0)
-    attributes.d.pointer(gl.FLOAT, false, 16, 8)
+    attributes.aHi.pointer(gl.FLOAT, false, 16, 0)
+    attributes.dHi.pointer(gl.FLOAT, false, 16, 8)
 
     pickBuffer.bind()
     attributes.pick0.pointer(gl.UNSIGNED_BYTE, false, 8, 0)
