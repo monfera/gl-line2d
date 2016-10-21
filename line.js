@@ -196,7 +196,7 @@ proto.draw = (function() {
       muniforms.color  = color
       muniforms.radius = width * pixelRatio
 
-      mshader.attributes.p.pointer(gl.FLOAT, false, 48, 0)
+      mshader.attributes.a.pointer(gl.FLOAT, false, 48, 0)
       gl.drawArrays(gl.POINTS, 0, (count / 3) | 0)
     }
   }
