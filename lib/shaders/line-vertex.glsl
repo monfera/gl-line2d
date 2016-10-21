@@ -11,7 +11,7 @@ varying vec2 direction;
 #pragma glslify: dirProject = require("./dirProject.glsl")
 
 void main() {
-  vec3 base = baseProject(scaleHi, translateHi, scaleLo, translateLo, aHi, aLo);
+  vec2 p = baseProject(scaleHi, translateHi, scaleLo, translateLo, aHi, aLo);
   vec2 dir = dirProject(scaleHi, scaleLo, dHi, dLo);
   vec2 n = 0.5 * width * normalize(screenShape.yx * vec2(dir.y, -dir.x)) / screenShape.xy;
   vec2 tangent = normalize(screenShape.xy * dir);
@@ -20,5 +20,5 @@ void main() {
   } else {
     direction = tangent;
   }
-  gl_Position = vec4(base.xy / base.z + n, 0.0, 1.0);
+  gl_Position = vec4(p + n, 0.0, 1.0);
 }

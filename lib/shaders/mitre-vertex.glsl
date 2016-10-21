@@ -8,7 +8,7 @@ uniform float radius;
 #pragma glslify: baseProject = require("./baseProject.glsl")
 
 void main() {
-  vec3 pp = baseProject(scaleHi, translateHi, scaleLo, translateLo, aHi, aLo);
-  gl_Position = vec4(pp.xy, 0, pp.z);
+  vec2 p = baseProject(scaleHi, translateHi, scaleLo, translateLo, aHi, aLo);
+  gl_Position = vec4(p, 0.0, 1.0);
   gl_PointSize = radius;
 }
