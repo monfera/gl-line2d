@@ -37,10 +37,12 @@ function GLLine2D(
 
   //Fill to axes
   this.fill       = [false, false, false, false]
-  this.fillColor  = [[0, 0, 0, 1],
-                     [0, 0, 0, 1],
-                     [0, 0, 0, 1],
-                     [0, 0, 0, 1]]
+  this.fillColor  = [
+    [0, 0, 0, 1],
+    [0, 0, 0, 1],
+    [0, 0, 0, 1],
+    [0, 0, 0, 1]
+  ]
 
   this.data       = null
   this.numPoints  = 0
@@ -284,10 +286,12 @@ proto.update = function(options) {
   this.color = (options.color || [0, 0, 1, 1]).slice()
   this.width = +(options.width || 1)
   this.fill = (options.fill || [false, false, false, false]).slice()
-  this.fillColor = deepCopy(options.fillColor || [[0, 0, 0, 1],
-                     [0, 0, 0, 1],
-                     [0, 0, 0, 1],
-                     [0, 0, 0, 1]])
+  this.fillColor = deepCopy(options.fillColor || [
+      [0, 0, 0, 1],
+      [0, 0, 0, 1],
+      [0, 0, 0, 1],
+      [0, 0, 0, 1]
+    ])
 
   var dashes = options.dashes || [1]
   var dashLength = 0
