@@ -2,15 +2,14 @@ precision mediump float;
 
 attribute vec2 a, d;
 
-uniform mat3 matrix;
-uniform vec2 projectAxis;
+uniform vec2 scale, translate, projectAxis;
 uniform float projectValue;
 uniform float depth;
 
 #pragma glslify: baseProject = require("./baseProject.glsl")
 
 void main() {
-  vec3 base = baseProject(matrix, a);
+  vec3 base = baseProject(scale, translate, a);
   vec2 p = base.xy / base.z;
   if(d.y < 0.0 || (d.y == 0.0 && d.x < 0.0)) {
     if(dot(p, projectAxis) < projectValue) {

@@ -55,11 +55,8 @@ var proto = GLLine2D.prototype
 proto.setProjectionModel = (function() {
 
   var pm = {
-    matrix: [
-      1, 0, 0,
-      0, 1, 0,
-      0, 0, 1
-    ],
+    scale: [0, 0],
+    translate: [0, 0],
     screenShape: [0, 0]
   }
 
@@ -76,10 +73,10 @@ proto.setProjectionModel = (function() {
     var screenX = viewBox[2] - viewBox[0]
     var screenY = viewBox[3] - viewBox[1]
 
-    pm.matrix[0] = 2 * boundX / dataX
-    pm.matrix[4] = 2 * boundY / dataY
-    pm.matrix[6] = 2 * (bounds[0] - dataBox[0]) / dataX - 1
-    pm.matrix[7] = 2 * (bounds[1] - dataBox[1]) / dataY - 1
+    pm.scale[0]     = 2 * boundX / dataX
+    pm.scale[1]     = 2 * boundY / dataY
+    pm.translate[0] = 2 * (bounds[0] - dataBox[0]) / dataX - 1
+    pm.translate[1] = 2 * (bounds[1] - dataBox[1]) / dataY - 1
 
     pm.screenShape[0] = screenX
     pm.screenShape[1] = screenY
@@ -89,7 +86,8 @@ proto.setProjectionModel = (function() {
 })()
 
 proto.setProjectionUniforms = function(uniforms, projectionModel) {
-  uniforms.matrix = projectionModel.matrix
+  uniforms.scale = projectionModel.scale
+  uniforms.translate = projectionModel.translate
   uniforms.screenShape = projectionModel.screenShape
 }
 
