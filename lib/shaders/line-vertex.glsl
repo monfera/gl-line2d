@@ -1,8 +1,8 @@
 precision mediump float;
 
-attribute vec2 aHi, dHi;
+attribute vec2 aHi, aLo, dHi, dLo;
 
-uniform vec2 scaleHi, translateHi, screenShape;
+uniform vec2 scaleHi, translateHi, scaleLo, translateLo, screenShape;
 uniform float width;
 
 varying vec2 direction;
@@ -11,8 +11,8 @@ varying vec2 direction;
 #pragma glslify: dirProject = require("./dirProject.glsl")
 
 void main() {
-  vec3 base = baseProject(scaleHi, translateHi, aHi);
-  vec2 dir = dirProject(scaleHi, dHi);
+  vec3 base = baseProject(scaleHi, translateHi, scaleLo, translateLo, aHi, aLo);
+  vec2 dir = dirProject(scaleHi, scaleLo, dHi, dLo);
   vec2 n = 0.5 * width * normalize(screenShape.yx * vec2(dir.y, -dir.x)) / screenShape.xy;
   vec2 tangent = normalize(screenShape.xy * dir);
   if(dir.x < 0.0 || (dir.x == 0.0 && dir.y < 0.0)) {
@@ -20,5 +20,5 @@ void main() {
   } else {
     direction = tangent;
   }
-  gl_Position = vec4(base.xy / base.z + n, 0, 1);
+  gl_Position = vec4(base.xy / base.z + n, 0.0, 1.0);
 }

@@ -13,22 +13,24 @@ var SHADERS = require('./lib/shaders')
 function GLLine2D(
   plot,
   dashPattern,
-  lineBuffer,
+  lineBufferHi,
+  lineBufferLo,
   pickBuffer,
   lineShader,
   mitreShader,
   fillShader,
   pickShader) {
 
-  this.plot        = plot
-  this.dashPattern = dashPattern
-  this.lineBuffer  = lineBuffer
-  this.pickBuffer  = pickBuffer
-  this.lineShader  = lineShader
-  this.mitreShader = mitreShader
-  this.fillShader  = fillShader
-  this.pickShader  = pickShader
-  this.usingDashes = false
+  this.plot         = plot
+  this.dashPattern  = dashPattern
+  this.lineBufferHi = lineBufferHi
+  this.lineBufferLo = lineBufferLo
+  this.pickBuffer   = pickBuffer
+  this.lineShader   = lineShader
+  this.mitreShader  = mitreShader
+  this.fillShader   = fillShader
+  this.pickShader   = pickShader
+  this.usingDashes  = false
 
   this.bounds     = [Infinity, Infinity, -Infinity, -Infinity]
   this.width      = 1
@@ -55,8 +57,10 @@ var proto = GLLine2D.prototype
 proto.setProjectionModel = (function() {
 
   var pm = {
-    scaleHi: [0, 0],
-    translateHi: [0, 0],
+    scaleHi: new Float32Array([0, 0]),
+    scaleLo: new Float32Array([0, 0]),
+    translateHi: new Float32Array([0, 0]),
+    translateLo: new Float32Array([0, 0]),
     screenShape: [0, 0]
   }
 
@@ -73,10 +77,19 @@ proto.setProjectionModel = (function() {
     var screenX = viewBox[2] - viewBox[0]
     var screenY = viewBox[3] - viewBox[1]
 
-    pm.scaleHi[0]     = 2 * boundX / dataX
-    pm.scaleHi[1]     = 2 * boundY / dataY
-    pm.translateHi[0] = 2 * (bounds[0] - dataBox[0]) / dataX - 1
-    pm.translateHi[1] = 2 * (bounds[1] - dataBox[1]) / dataY - 1
+    var scaleX = 2 * boundX / dataX
+    var scaleY = 2 * boundY / dataY
+    var translateX = 2 * (bounds[0] - dataBox[0]) / dataX - 1
+    var translateY = 2 * (bounds[1] - dataBox[1]) / dataY - 1
+
+    pm.scaleHi[0]     = scaleX
+    pm.scaleHi[1]     = scaleY
+    pm.scaleLo[0]     = scaleX - pm.scaleHi[0]
+    pm.scaleLo[1]     = scaleY - pm.scaleHi[1]
+    pm.translateHi[0] = translateX
+    pm.translateHi[1] = translateY
+    pm.translateLo[0] = translateX - pm.translateHi[0]
+    pm.translateLo[1] = translateY - pm.translateHi[1]
 
     pm.screenShape[0] = screenX
     pm.screenShape[1] = screenY
@@ -114,8 +127,12 @@ proto.draw = (function() {
 
     var color     = this.color
 
-    var buffer = this.lineBuffer
-    buffer.bind()
+    var fillAttributes = this.fillShader.attributes
+
+    this.lineBufferLo.bind()
+    fillAttributes.aLo.pointer(gl.FLOAT, false, 16, 0)
+
+    this.lineBufferHi.bind()
 
     var fill = this.fill
 
@@ -128,7 +145,6 @@ proto.draw = (function() {
       this.setProjectionUniforms(fillUniforms, projectionModel)
       fillUniforms.depth = plot.nextDepthValue()
 
-      var fillAttributes = fillShader.attributes
       fillAttributes.aHi.pointer(gl.FLOAT, false, 16, 0)
       fillAttributes.dHi.pointer(gl.FLOAT, false, 16, 8)
 
@@ -171,6 +187,12 @@ proto.draw = (function() {
     var shader = this.lineShader
     shader.bind()
 
+    this.lineBufferLo.bind()
+    shader.attributes.aLo.pointer(gl.FLOAT, false, 16, 0)
+    shader.attributes.dLo.pointer(gl.FLOAT, false, 16, 8)
+
+    this.lineBufferHi.bind()
+
     var uniforms = shader.uniforms
     this.setProjectionUniforms(uniforms, projectionModel)
     uniforms.color  = color
@@ -187,6 +209,11 @@ proto.draw = (function() {
     //Draw mitres
     if(width > 2 && !this.usingDashes) {
       var mshader = this.mitreShader
+
+      this.lineBufferLo.bind()
+      mshader.attributes.aLo.pointer(gl.FLOAT, false, 16, 0)
+
+      this.lineBufferHi.bind()
       mshader.bind()
 
       var muniforms = mshader.uniforms
@@ -222,7 +249,6 @@ proto.drawPick = (function() {
     var pixelRatio = plot.pickPixelRatio
 
     var shader     = this.pickShader
-    var buffer     = this.lineBuffer
     var pickBuffer = this.pickBuffer
 
     PICK_OFFSET[0] =  pickOffset         & 0xff
@@ -239,9 +265,14 @@ proto.drawPick = (function() {
 
     var attributes = shader.attributes
 
-    buffer.bind()
+    this.lineBufferHi.bind()
     attributes.aHi.pointer(gl.FLOAT, false, 16, 0)
     attributes.dHi.pointer(gl.FLOAT, false, 16, 8)
+
+    this.lineBufferLo.bind()
+    attributes.aLo.pointer(gl.FLOAT, false, 16, 0)
+
+    //attributes.dLo.pointer(gl.FLOAT, false, 16, 8)
 
     pickBuffer.bind()
     attributes.pick0.pointer(gl.UNSIGNED_BYTE, false, 8, 0)
@@ -343,9 +374,11 @@ proto.update = function(options) {
   if(bounds[3] === bounds[1]) bounds[3] += 1
 
   //Generate line data
-  var lineData    = pool.mallocFloat32(24 * (numPoints - 1))
+  var lineData    = pool.mallocFloat64(24 * (numPoints - 1))
+  var lineDataHi  = pool.mallocFloat32(24 * (numPoints - 1))
+  var lineDataLo  = pool.mallocFloat32(24 * (numPoints - 1))
   var pickData    = pool.mallocUint32(12 * (numPoints - 1))
-  var lineDataPtr = lineData.length
+  var lineDataPtr = lineDataHi.length
   var pickDataPtr = pickData.length
   ptr = numPoints
 
@@ -423,17 +456,26 @@ proto.update = function(options) {
     pickData[--pickDataPtr] = akey1
   }
 
+  for(i = 0; i < lineData.length; i++) {
+    lineDataHi[i] = lineData[i]
+    lineDataLo[i] = lineData[i] - lineDataHi[i]
+  }
+
   this.vertCount = 6 * count
-  this.lineBuffer.update(lineData.subarray(lineDataPtr))
+  this.lineBufferHi.update(lineDataHi.subarray(lineDataPtr))
+  this.lineBufferLo.update(lineDataLo.subarray(lineDataPtr))
   this.pickBuffer.update(pickData.subarray(pickDataPtr))
 
   pool.free(lineData)
+  pool.free(lineDataHi)
+  pool.free(lineDataLo)
   pool.free(pickData)
 }
 
 proto.dispose = function() {
   this.plot.removeObject(this)
-  this.lineBuffer.dispose()
+  this.lineBufferLo.dispose()
+  this.lineBufferHi.dispose()
   this.pickBuffer.dispose()
   this.lineShader.dispose()
   this.mitreShader.dispose()
@@ -444,17 +486,19 @@ proto.dispose = function() {
 
 function createLinePlot(plot, options) {
   var gl = plot.gl
-  var lineBuffer  = createBuffer(gl)
-  var pickBuffer  = createBuffer(gl)
-  var dashPattern = createTexture(gl, [1, 1])
-  var lineShader  = createShader(gl, SHADERS.lineVertex,  SHADERS.lineFragment)
-  var mitreShader = createShader(gl, SHADERS.mitreVertex, SHADERS.mitreFragment)
-  var fillShader  = createShader(gl, SHADERS.fillVertex,  SHADERS.fillFragment)
-  var pickShader  = createShader(gl, SHADERS.pickVertex,  SHADERS.pickFragment)
-  var linePlot    = new GLLine2D(
+  var lineBufferHi = createBuffer(gl)
+  var lineBufferLo = createBuffer(gl)
+  var pickBuffer   = createBuffer(gl)
+  var dashPattern  = createTexture(gl, [1, 1])
+  var lineShader   = createShader(gl, SHADERS.lineVertex,  SHADERS.lineFragment)
+  var mitreShader  = createShader(gl, SHADERS.mitreVertex, SHADERS.mitreFragment)
+  var fillShader   = createShader(gl, SHADERS.fillVertex,  SHADERS.fillFragment)
+  var pickShader   = createShader(gl, SHADERS.pickVertex,  SHADERS.pickFragment)
+  var linePlot     = new GLLine2D(
     plot,
     dashPattern,
-    lineBuffer,
+    lineBufferHi,
+    lineBufferLo,
     pickBuffer,
     lineShader,
     mitreShader,

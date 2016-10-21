@@ -1,7 +1,7 @@
 #pragma glslify: export(project)
-
-#pragma glslify: dirProject = require("./dirProject.glsl")
-
-vec3 project(vec2 scaleHi, vec2 translateHi, vec2 aHi) {
-  return vec3(dirProject(scaleHi, aHi) + translateHi, 1);
+vec3 project(vec2 scHi, vec2 trHi, vec2 scLo, vec2 trLo, vec2 posHi, vec2 posLo) {
+  return vec3( scHi * posHi + trHi
+             + scLo * posHi + trLo
+             + scHi * posLo
+             + scLo * posLo, 1.0);
 }

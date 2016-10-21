@@ -1,9 +1,9 @@
-precision mediump float;
+precision highp float;
 
-attribute vec2 aHi, dHi;
+attribute vec2 aHi, aLo, dHi;
 attribute vec4 pick0, pick1;
 
-uniform vec2 scaleHi, translateHi, screenShape;
+uniform vec2 scaleHi, translateHi, scaleLo, translateLo, screenShape;
 uniform float width;
 
 varying vec4 pickA, pickB;
@@ -11,7 +11,7 @@ varying vec4 pickA, pickB;
 #pragma glslify: baseProject = require("./baseProject.glsl")
 
 void main() {
-  vec3 base = baseProject(scaleHi, translateHi, aHi);
+  vec3 base = baseProject(scaleHi, translateHi, scaleLo, translateLo, aHi, aLo);
   vec2 n = width * normalize(screenShape.yx * vec2(dHi.y, -dHi.x)) / screenShape.xy;
   gl_Position = vec4(base.xy / base.z + n, 0, 1);
   pickA = pick0;
