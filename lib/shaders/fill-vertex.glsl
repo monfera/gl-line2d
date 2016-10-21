@@ -7,8 +7,10 @@ uniform vec2 projectAxis;
 uniform float projectValue;
 uniform float depth;
 
+#pragma glslify: project = require("./project.glsl")
+
 void main() {
-  vec3 base = matrix * vec3(a, 1);
+  vec3 base = project(matrix, a);
   vec2 p = base.xy / base.z;
   if(d.y < 0.0 || (d.y == 0.0 && d.x < 0.0)) {
     if(dot(p, projectAxis) < projectValue) {
