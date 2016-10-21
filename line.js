@@ -64,20 +64,11 @@ var proto = GLLine2D.prototype
 
   var PICK_OFFSET = [0, 0, 0, 0]
 
-  proto.draw = function() {
-    var count = this.vertCount
+  proto.projectIntoVectors = function() {
 
-    if(!count) {
-      return
-    }
-
-    var plot       = this.plot
-    var width      = this.width
-    var bounds     = this.bounds
-    var gl         = plot.gl
-    var viewBox    = plot.viewBox
-    var dataBox    = plot.dataBox
-    var pixelRatio = plot.pixelRatio
+    var bounds  = this.bounds
+    var viewBox = this.plot.viewBox
+    var dataBox = this.plot.dataBox
 
     var boundX  = bounds[2] - bounds[0]
     var boundY  = bounds[3] - bounds[1]
@@ -93,6 +84,21 @@ var proto = GLLine2D.prototype
 
     SCREEN_SHAPE[0] = screenX
     SCREEN_SHAPE[1] = screenY
+  }
+
+  proto.draw = function() {
+    var count = this.vertCount
+
+    if(!count) {
+      return
+    }
+
+    this.projectIntoVectors()
+
+    var plot       = this.plot
+    var width      = this.width
+    var gl         = plot.gl
+    var pixelRatio = plot.pixelRatio
 
     var color     = this.color
 
@@ -193,28 +199,12 @@ var proto = GLLine2D.prototype
       return pickOffset + numPoints
     }
 
+    this.projectIntoVectors()
+
     var plot       = this.plot
     var width      = this.width
-    var bounds     = this.bounds
     var gl         = plot.gl
-    var viewBox    = plot.viewBox
-    var dataBox    = plot.dataBox
     var pixelRatio = plot.pickPixelRatio
-
-    var boundX  = bounds[2]  - bounds[0]
-    var boundY  = bounds[3]  - bounds[1]
-    var dataX   = dataBox[2] - dataBox[0]
-    var dataY   = dataBox[3] - dataBox[1]
-    var screenX = viewBox[2] - viewBox[0]
-    var screenY = viewBox[3] - viewBox[1]
-
-    MATRIX[0] = 2 * boundX / dataX
-    MATRIX[4] = 2 * boundY / dataY
-    MATRIX[6] = 2 * (bounds[0] - dataBox[0]) / dataX - 1
-    MATRIX[7] = 2 * (bounds[1] - dataBox[1]) / dataY - 1
-
-    SCREEN_SHAPE[0] = screenX
-    SCREEN_SHAPE[1] = screenY
 
     var shader     = this.pickShader
     var buffer     = this.lineBuffer
